@@ -1,82 +1,111 @@
 from urllib import request
-from datetime import datetime
-import pickle, os, pprint, time, json, sqlite3
-import pymysql
+from datetime import datetime, date
+from  dbconnect import getAuth
+import pickle, os, pprint, time, json, sqlite3, pymysql
 
-db = pymysql.connect('localhost','root','root','flip',autocommit=True)
-c = db.cursor()
-
+"""Connects to a database and returns a cursor"""
+#database credentials
+auth = getAuth()
+host     = auth['host']
+database = auth['database']
+username = auth['username']
+password = auth['password']
+table    = auth['table']
+try:
+    #connection to the database, table will be auto selected
+    db = pymysql.connect(host=host,user=username,password=password,database=database,autocommit=True)
+    c = db.cursor()
+    print("Databse Connected Established...")
+    print("Database: {0}".format(database))
+    print("Table: {0}".format(table))
+    print("User: {0}".format(username))
+    query = """CREATE TABLE IF NOT EXISTS `apidb` (
+                      `id` smallint(5) unsigned NOT NULL,
+                      `name` varchar(46) DEFAULT NULL,
+                      `description` varchar(200) DEFAULT NULL,
+                      `members` int(1) NOT NULL,
+                      `category` int(2) NOT NULL,
+                      `active` BOOLEAN,
+                      `updated` date NOT NULL,
+                      `added` date NOT NULL,
+                      PRIMARY KEY (`id`)
+                    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;"""
+    c.execute(query)
+except pymysql.Error as e:
+    print(e.args[1])
 
 categorynames = ["Miscellaneous",
-					"Ammo",
-					"Arrows",
-					"Bolts",
-					"Construction materials",
-					"Construction projects",
-					"Cooking ingredients",
-					"Costumes",
-					"Crafting materials",
-					"Familiars",
-					"Farming produce",
-					"Fletching materials",
-					"Food and drink",
-					"Herblore materials",
-					"Hunting equipment",
-					"Hunting Produce",
-					"Jewellery",
-					"Mage armour",
-					"Mage weapons",
-					"Melee armour - low level",
-					"Melee armour - mid level",
-					"Melee armour - high level",
-					"Melee weapons - low level",
-					"Melee weapons - mid level",
-					"Melee weapons - high level",
-					"Mining and Smithing",
-					"Potions",
-					"Prayer armour",
-					"Prayer materials",
-					"Range armour",
-					"Range weapons",
-					"Runecrafting",
-					"Runes, Spells and Teleports",
-					"Seeds",
-					"Summoning scrolls",
-					"Tools and containers",
-					"Woodcutting product",
-					"Pocket items",
-					"Construction products",
-					"Food and Drink"
+                "Ammo",
+                "Arrows",
+                "Bolts",
+                "Construction materials",
+                "Construction projects",
+                "Cooking ingredients",
+                "Costumes",
+                "Crafting materials",
+                "Familiars",
+                "Farming produce",
+                "Fletching materials",
+                "Food and drink",
+                "Herblore materials",
+                "Hunting equipment",
+                "Hunting Produce",
+                "Jewellery",
+                "Mage armour",
+                "Mage weapons",
+                "Melee armour - low level",
+                "Melee armour - mid level",
+                "Melee armour - high level",
+                "Melee weapons - low level",
+                "Melee weapons - mid level",
+                "Melee weapons - high level",
+                "Mining and Smithing",
+                "Potions",
+                "Prayer armour",
+                "Prayer materials",
+                "Range armour",
+                "Range weapons",
+                "Runecrafting",
+                "Runes, Spells and Teleports",
+                "Seeds",
+                "Summoning scrolls",
+                "Tools and containers",
+                "Woodcutting product",
+                "Pocket items",
+                "Construction products",
+                "Food and Drink"
 				]
 
 def is_indb(item):
-	if item['members'] == 'true':
-		item['members'] = 1;
-	else:
-		item['members'] = 0;
-	indb = c.execute("select id from apidb WHERE id={0}".format(item['id']))
-	if indb == 1:
-		try:
-			q = 'UPDATE `apidb` SET `updated`={0}, `members`={1}, `category`={2}, `name`="{3}" WHERE `id`={4};'.format(int(time.time()),item['members'],categorynames.index(item['type']),item['name'],item['id'])
-			c.execute(q)
-			db.commit()
-		except Exception as e:
-			savelog('Update failed. Error: ' + str(e))
-		return True
-	else:
-		return False
+    if item['members'] == 'true':
+        item['members'] = 1;
+    else:
+        item['members'] = 0;
+    indb = c.execute("select id from apidb WHERE id={0}".format(item['id']))
+    if indb == 1:
+        try:
+            today = date.today()
+            stamp = today.strftime("%Y-%m-%d")
+            q = 'UPDATE `apidb` SET `updated`="{0}", `members`={1}, `category`={2}, `name`="{3}" WHERE `id`={4};'.format(stamp,item['members'],categorynames.index(item['type']),item['name'],item['id'])
+            c.execute(q)
+            db.commit()
+        except Exception as e:
+            savelog('Update failed. Error: ' + str(e))
+        return True
+    else:
+        return False
 
 def save_picture(url,url2):
-	path = "C:\\Users\\Adam\\Desktop\\UwAmp\\www\\fliplog\\images\\"
+	path = "images/"
 	id = url.split('gif?id=')[1]
-	small = path + "small\\" + str(id) + '.png'
-	large = path + "large\\" + str(id) + '.png'
+	small = path + "small/" + str(id) + '.png'
+	large = path + "large/" + str(id) + '.png'
 	if os.path.isfile(small) is False:
 		with request.urlopen(url) as response1, open(small, 'wb') as out_file:
 			data1 = response1.read()
 			out_file.write(data1)
 			savelog('Small Image saved -> ' + str(id) + '.gif')
-	if os.path.isfile(large) is False:    
+	if os.path.isfile(large) is False:
 		with request.urlopen(url2) as response2, open(large, 'wb') as out_file:
 			data2 = response2.read()
 			out_file.write(data2)
@@ -100,71 +129,71 @@ def fetch(category, letter, page, sleep=True):
         savelog(e)
 
 
-def first(catarg=32,charinit='g',saveData=True,savePic=True):
-	global categorynames
-	empty_pages = [] 
-	firstrun = True
-	category = list(range(catarg,38))
-	fullalphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','%23']
+def first(catarg=1,charinit='a',saveData=True,savePic=True):
+    global categorynames
+    empty_pages = []
+    firstrun = True
+    category = list(range(catarg,38))
+    fullalphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','%23']
 
 
-	for cat in category :
-		if firstrun == False:
-			letter = fullalphabet
-		else:
-			letter = fullalphabet[fullalphabet.index(charinit):]
-            
-		for char in letter:
-    
-			for page in list(range(1,10)):
-				if firstrun == True:
-					result = fetch(cat,char,page,False)
-					firstrun = False
-				else:
-					result = fetch(cat,char,page)
-				if result == None:
-					numOfResult = 0
-				else:
-					try:
-						numOfResult = len(result)
-					except Exception as e:
-						return e
-				savelog("------------------------------------------------------------")
-				savelog("Categroy: {0}. Letter: {1}. Page: {2}. Returned items: {3}".format(cat,char,page,numOfResult))
-				savelog("------------------------------------------------------------")
+    for cat in category :
+        if firstrun == False:
+                letter = fullalphabet
+        else:
+                letter = fullalphabet[fullalphabet.index(charinit):]
 
-				if result == None:
-					savelog("<<< This Letter contains no Items >>>")
-					empty_pages += {'letter' : char, 'page' : page, 'category' : cat}
-					break
-				row = [] 
+        for char in letter:
 
-				for item in result:
-					
-					if is_indb(item) == False:
-						#if an item has been found
-						#setting members value to true or false
-						if item['members'] == 'true':
-							item['members'] = int(1)
-						else:
-							item['members'] = int(0)
-						active = 1
+            for page in list(range(1,10)):
+                if firstrun == True:
+                    result = fetch(cat,char,page,False)
+                    firstrun = False
+                else:
+                    result = fetch(cat,char,page)
+                if result == None:
+                    numOfResult = 0
+                else:
+                    try:
+                        numOfResult = len(result)
+                    except Exception as e:
+                        return e
+                savelog("------------------------------------------------------------")
+                savelog("Categroy: {0}. Letter: {1}. Page: {2}. Returned items: {3}".format(cat,char,page,numOfResult))
+                savelog("------------------------------------------------------------")
 
-						#place into the list
-						row.append((item['id'],item['name'],item['description'],item['members'],cat,active,time.time()))
-						savelog( "Added -> {0}".format(item['name']))
-					else:
-						savelog("Updated -> {0}".format(item['name']))
-					if savePic == True:
-						save_picture(item['icon'],item['icon_large'])
-				if saveData == True: #write to the database
-					if len(row) > 0:
-						c.executemany('insert into apidb (id,name,description,members,category,active,updated) values (%s,%s,%s,%s,%s,%s,%s)', row)
-						db.commit()
-				if len(result) < 12:
-					savelog(">> Over next letter")
-					break
+                if result == None:
+                    savelog("<<< This Letter contains no Items >>>")
+                    empty_pages += {'letter' : char, 'page' : page, 'category' : cat}
+                    break
+                row = []
 
+                for item in result:
+                    today = date.today()
+                    stamp = today.strftime("%Y-%m-%d")
+                    if is_indb(item) == False:
+                        #if an item has been found
+                        #setting members value to true or false
+                        if item['members'] == 'true':
+                            item['members'] = int(1)
+                        else:
+                            item['members'] = int(0)
+                            active = 1
+
+                        #place into the list
+                        row.append((item['id'],item['name'],item['description'],item['members'],cat,active,stamp,stamp))
+                        savelog( "Added -> {0}".format(item['name']))
+                    else:
+                        savelog("Updated -> {0}".format(item['name']))
+                if savePic == True:
+                    save_picture(item['icon'],item['icon_large'])
+                if saveData == True: #write to the database
+                    if len(row) > 0:
+                        c.executemany('insert into apidb (id,name,description,members,category,active,updated,added) values (%s,%s,%s,%s,%s,%s,%s,%s)', row)
+                        db.commit()
+                if len(result) < 12:
+                    savelog(">> Over next letter")
+                    break
 def savelog(log, verbose = True):
 	with open('error.log', 'a') as f:
 		f.write(log + '\n')
