@@ -153,11 +153,16 @@ def pager(category,letter,saveData=True,savePic=True):
 #                    result = fetch(cat,char,page,False) #try to fetch the cat at letter
 #                    if result == False:
 #                        break
+                retries = 0
                 while True:
                     result = fetch(cat,char,page,False)
                     if isinstance(result, list) and len(result) > 0:
                         break
+                    elif retries == 10:
+                        print('Empty page')
+                        break
                     else:
+                        retries += 1
                         print('Resend Query')
                         time.sleep(10)
 
