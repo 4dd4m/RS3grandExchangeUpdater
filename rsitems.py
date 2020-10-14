@@ -146,25 +146,23 @@ def pager(category,letter,saveData=True,savePic=True):
                 savelog("C: {0} L:'{1}' P: {2}".format(cat,char,page))
                 savelog("--------------------")
 
-#                if result == False:
-#                    savelog("<<< This query has been failed (no JSON returned) >>>")
-#                    time.sleep(10)
-#                    result = fetch(cat,char,page,False) #try to fetch the cat at letter
-#                    if result == False:
-#                        break
-                retries = 0
+                retries = 0 #counter for break the while
                 while True:
                     result = fetch(cat,char,page,False)
                     if isinstance(result, list) and len(result) > 0:
-                        break
-                    elif retries == 10:
+                        break # valid list
+                    elif isinstance(result, list) and len(result) == 0:
                         print('Empty page')
-                        break
+                        retries = 3
+                        break #valid, but empty page
+                    elif retries == 3:
+                        print('Empty page')
+                        break # not valid, after 3 retry
                     else:
-                        retries += 1
+                        retries += 1 #not valid until 3 retry
                         print('Resend Query')
                         time.sleep(10)
-                if retries == 10:
+                if retries == 3: #just break from the outer for cycle
                     break
 
                 row = [] #stores item data for the database query
