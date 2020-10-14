@@ -149,8 +149,11 @@ def pager(category,letter,saveData=True,savePic=True):
                 savelog("--------------------")
 
                 if result == False:
-                    savelog("<<< This Letter contains no Items >>>")
-                    break
+                    savelog("<<< This query has been failed (no JSON returned) >>>")
+                    sleep(10)
+                    result = fetch(cat,char,page,False) #try to fetch the cat at letter
+                    if result == False:
+                        break
                 row = [] #stores item data for the database query
 
                 for item in result:
