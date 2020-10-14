@@ -154,9 +154,10 @@ def pager(category,letter,saveData=True,savePic=True):
 #                    if result == False:
 #                        break
                 while isinstance(result, list) == False: #Check the return type and keep resending the qury
-                    result = fetch(cat,char,page,False) #try to fetch the cat at letter
-                    print('Resend Query..... Timeout 10s...')
                     time.sleep(10)
+                    result = fetch(cat,char,page,False) #try to fetch the cat at letter
+                    print("Query: {0}.".format(type(result))
+                    print('Resend Query..... Timeout 10s...')
 
                 row = [] #stores item data for the database query
 
