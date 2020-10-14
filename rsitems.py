@@ -119,7 +119,7 @@ def fetch(category, letter, page, sleep=True):
     url += str(category) + "&alpha=" + str(letter) + "&page=" + str(page)
     try:
         query = json.loads(request.urlopen(url,timeout=30).read().decode('ISO-8859-1'))['items']
-        if len(query) > 0:
+        if isinstance(query, list):
             return query
         else:
             return None
