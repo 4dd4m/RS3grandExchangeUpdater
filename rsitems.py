@@ -156,6 +156,7 @@ def pager(category,letter,saveData=True,savePic=True):
 #                        break
                 while result != False:
                     result = fetch(cat,char,page,False) #try to fetch the cat at letter
+                    print(type(result))
                     sleep(10)
 
                 row = [] #stores item data for the database query
