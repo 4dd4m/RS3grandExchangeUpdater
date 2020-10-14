@@ -149,14 +149,14 @@ def pager(category,letter,saveData=True,savePic=True):
 
 #                if result == False:
 #                    savelog("<<< This query has been failed (no JSON returned) >>>")
-#                    sleep(10)
+#                    time.sleep(10)
 #                    result = fetch(cat,char,page,False) #try to fetch the cat at letter
 #                    if result == False:
 #                        break
                 print(type(result))
-                while type(result) != bool:
+                while type(result) != 'list':
                     result = fetch(cat,char,page,False) #try to fetch the cat at letter
-                    sleep(10)
+                    time.sleep(10)
 
                 row = [] #stores item data for the database query
 
