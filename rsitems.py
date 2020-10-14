@@ -154,7 +154,7 @@ def pager(category,letter,saveData=True,savePic=True):
 #                    if result == False:
 #                        break
                 print(type(result))
-                while isinstance(result, list) == True;
+                while isinstance(result, list) == True:
                     result = fetch(cat,char,page,False) #try to fetch the cat at letter
                     print('Resend Query.....')
                     time.sleep(10)
