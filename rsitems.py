@@ -142,11 +142,10 @@ def pager(category,letter,saveData=True,savePic=True):
             if char == '#':
                 char = '%23'
             for page in list(range(1,50)): #page through
-                result = False
-
                 savelog("--------------------")
                 savelog("C: {0} L:'{1}' P: {2}".format(cat,char,page))
                 savelog("--------------------")
+                result = fetch(cat,char,page,False) #try to fetch the cat at letter
 
 #                if result == False:
 #                    savelog("<<< This query has been failed (no JSON returned) >>>")
@@ -154,9 +153,9 @@ def pager(category,letter,saveData=True,savePic=True):
 #                    result = fetch(cat,char,page,False) #try to fetch the cat at letter
 #                    if result == False:
 #                        break
+                print(type(result))
                 while type(result) != bool:
                     result = fetch(cat,char,page,False) #try to fetch the cat at letter
-                    print(type(result))
                     sleep(10)
 
                 row = [] #stores item data for the database query
