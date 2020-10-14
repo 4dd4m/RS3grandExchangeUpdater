@@ -124,7 +124,7 @@ def fetch(category, letter, page, sleep=True):
         else:
             return None
     except Exception as e:
-        print("Fetch failed: " + e)
+        print("Fetch failed: " + str(e))
         savelog(url)
         savelog(e)
 
@@ -148,7 +148,7 @@ def pager(category,letter,saveData=True,savePic=True):
                 savelog("C: {0} L:'{1}' P: {2}".format(cat,char,page))
                 savelog("--------------------")
 
-                if result == None:
+                if result == False:
                     savelog("<<< This Letter contains no Items >>>")
                     break
                 row = [] #stores item data for the database query
