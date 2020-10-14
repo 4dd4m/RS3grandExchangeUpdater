@@ -155,7 +155,7 @@ def pager(category,letter,saveData=True,savePic=True):
 #                        break
                 while True:
                     time.sleep(1)
-                    result = fetch(1,'a',10,True)
+                    result = fetch(cat,char,page,False)
                     if isinstance(result, list) and len(result) > 0:
                         break
 
