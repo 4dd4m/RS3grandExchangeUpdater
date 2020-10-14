@@ -154,10 +154,12 @@ def pager(category,letter,saveData=True,savePic=True):
 #                    if result == False:
 #                        break
                 while True:
-                    time.sleep(1)
+                    time.sleep(10)
                     result = fetch(cat,char,page,False)
                     if isinstance(result, list) and len(result) > 0:
                         break
+                    else:
+                        print('Resend Query')
 
                 row = [] #stores item data for the database query
 
