@@ -1,0 +1,2 @@
+def getAuth ():
+    return {'host' : '' , 'database' : '', 'username' : '', 'password' : '', 'table' : ''}
