@@ -1,6 +1,7 @@
 from urllib import request
 from datetime import datetime, date
 from  dbconnect import getAuth
+from time import sleep
 import pickle, os, pprint, time, json, sqlite3, pymysql, sys
 
 """Connects to a database and returns a cursor"""
@@ -113,7 +114,7 @@ def save_picture(url,url2):
             savelog('Large Image saved -> ' + str(id) + '.gif',False)
 
 def fetch(category, letter, page, sleep=True):
-    if sleep == True:
+    if sleep:
         time.sleep(6)
     url = "http://services.runescape.com/m=itemdb_rs/api/catalogue/items.json?category="
     url += str(category) + "&alpha=" + str(letter) + "&page=" + str(page)
@@ -176,9 +177,10 @@ def pager(category,letter,saveData=True,savePic=True):
                         else:
                             item['members'] = int(0)
                         active = 1
+                        price = item['current']['price']
 
                         #place into the list
-                        row.append((item['id'],item['name'],item['description'],item['members'],cat,active,stamp,stamp))
+                        row.append((item['id'],item['name'],item['description'],item['members'],cat,active,stamp,stamp,price))
                         savelog( "Added -> {0}".format(item['name']))
                     else:
                         savelog("Updated -> {0}".format(item['name']))
@@ -186,7 +188,7 @@ def pager(category,letter,saveData=True,savePic=True):
                         save_picture(item['icon'],item['icon_large'])
                 if saveData == True: #write to the database
                     if len(row) > 0:
-                        c.executemany('insert into apidb (id,name,description,members,category,active,updated,added) values (%s,%s,%s,%s,%s,%s,%s,%s)',row)
+                        c.executemany('insert into apidb (id,name,description,members,category,active,updated,added,price) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)',row)
                         db.commit()
                 if len(result) == 12:
                     savelog(">> Over next page")
@@ -211,11 +213,11 @@ def is_update_required():
     print('-------------------')
     for i in category: #iterate trhough all category 0 - 41
         url = "http://services.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=" + str(i)
+        time.sleep(3)
         try:
-            alphabet = json.loads(request.urlopen(url, timeout=10)
-                       .read())['alpha']
+            alphabet = json.loads(request.urlopen(url, timeout=10).read())['alpha']
         except Exception as e:
-            print("Error from is_update: " + e)
+            print("Error from is_update: ")
 
         subItemsPerCat = 0 #items in each catergory
         itemsPerCat = c.execute("select * from apidb where category="+str(i)+";")
@@ -229,8 +231,8 @@ def is_update_required():
             alpha = ['#','a','b','c','d','e','f','g','h','i','j','k','l','m','n',\
                      'o','p','q','r','s','t','u','v','w','x','y','z']
             url = "https://secure.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=" + str(i)
-            itemRemoteLetter = json.loads(request.urlopen(url, timeout=10)
-                       .read())['alpha']
+            sleep(6)
+            itemRemoteLetter = json.loads(request.urlopen(url, timeout=10).read())['alpha']
 
             letterCounter = -1 # this calls the nth item of itemRemoteLetter
             for letter in alpha: #iterating through each letter in the cat.
