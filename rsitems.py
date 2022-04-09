@@ -149,7 +149,7 @@ def pager(category,letter,saveData=True,savePic=True):
 
                 retries = 0 #counter for break the while
                 while True:
-                    result = fetch(cat,char,page,False)
+                    result = fetch(cat,char,page,True)
                     if isinstance(result, list) and len(result) > 0:
                         break # valid list
                     elif isinstance(result, list) and len(result) == 0:
@@ -215,9 +215,11 @@ def is_update_required():
         url = "http://services.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=" + str(i)
         time.sleep(3)
         try:
-            alphabet = json.loads(request.urlopen(url, timeout=10).read())['alpha']
-        except Exception as e:
-            print("Error from is_update: ")
+            alphabet = json.loads(request.urlopen(url, timeout=10)
+                       .read())['alpha']
+        except Exception:
+            print("TypeError")
+            continue
 
         subItemsPerCat = 0 #items in each catergory
         itemsPerCat = c.execute("select * from apidb where category="+str(i)+";")
