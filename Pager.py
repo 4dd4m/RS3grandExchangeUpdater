@@ -1,8 +1,8 @@
-from api import Api
+from Api import Api
+from Item import Item
 import json
-from time import sleep
-from item import Item
 from json import JSONDecodeError
+from time import sleep
 
 class Pager(Api):
 
@@ -14,33 +14,30 @@ class Pager(Api):
         #category page out
         cat = self.cfg.data['categoryPtr']
         for c in range(cat, self.cfg.data['categoryCount']):
-            print("Opening Category " + str(c))
             singleCatCount = self.getSingleCatCount(c)
 
-            pageCounter = 0
             #letter page out
             for l in self.getAlpha():
-                print("Opening Letter " + l)
-
+                #page page out
                 for i in range(1,50):
+                    print("----------------\nC:{} | L:{} | P:{}\n----------------".format(str(c), l, str(i)))
                     if l == '#':
                         l = '%23'
                     url = "https://services.runescape.com/m=itemdb_rs/api/catalogue/items.json?category={}&alpha={}&page={}".format(c,l,i)
                     sleep(3)
                     try:
-                        result  = json.loads(self.query(url).content.decode('ISO-8859-1'))
+                        result  = self.remoteQuery(url)
                     except JSONDecodeError:
                         sleep(10)
-                        result  = json.loads(self.query(url).content.decode('ISO-8859-1'))
+                        result  = self.remoteQuery(url)
                     items = result['items']
-                    if items == [] or len(items) < 12:
+                    if items == []:
                         print("Empty Page")
                         break
                     else:
                         for item in items:
                             obj = Item(json.dumps(item))
                             obj.toDb()
-                        pageCounter += 1
                         result = ""
                         items = ""
 
@@ -61,3 +58,7 @@ if __name__ == '__main__':
         p.page()
     except KeyboardInterrupt:
         p.cfg.save()
+    except:
+        print("Something went wrong.... Restarting in 30 sec")
+        sleep(30)
+        p.page()

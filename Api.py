@@ -1,9 +1,8 @@
 from urllib import request
 import requests, re
 from datetime import datetime, date
-from  dbconnect import getAuth
 from time import sleep
-import pickle, os, pprint, time, json, sys
+import os, time, json, sys
 from json import JSONDecodeError
 from Config import Config
 
@@ -13,13 +12,13 @@ class Api:
     def __init__(self):
        self.localHost = "http://localhost"
        self.cfg = Config()
-       self.getLastRuneDay()
        self.getLocalCount()
        self.getCategoryCount()
        self.getRemoteCount()
-       self.detectRuneDayEqual()
        self.getCategoryPtr()
        self.cfg.save()
+       self.lastQuery = ""
+       self.lastResponse = ""
 
     def getCategoryPtr(self):
         #load the category list from config or []
@@ -40,10 +39,10 @@ class Api:
                 url = "https://services.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=" + str(i)
                 try:
                     sleep(1)
-                    response = json.loads(self.query(url).content)
+                    response = self.remoteQuery(url).content
                 except JSONDecodeError:
                     sleep(10)
-                    response = json.loads(self.query(url).content)
+                    response = self.remoteQuery(url).content
 
                 for letter in response['alpha']:
                     total += letter['items'] 
@@ -59,8 +58,7 @@ class Api:
             return self.cfg.data['localCount']
         except KeyError:
             url = self.localHost + "/count/item"
-            response = self.query(url)
-            count = json.loads(response.content)
+            count = self.localQuery(url)
             self.cfg.data['localCount'] = count['count']
             return count['count']
 
@@ -71,8 +69,7 @@ class Api:
         except KeyError:
             try:
                 url = self.localHost + "/count/category"
-                response = self.query(url)
-                count = json.loads(response.content)
+                count = self.localQuery(url)
                 self.cfg.data['categoryCount'] = count['count']
                 if count['count'] == 0:
                     print("0 Category. Database Seeded?")
@@ -83,43 +80,45 @@ class Api:
     def getSingleCatCount(self, cat):
         #how many items we have in a category?
         url = self.localHost + "/count/category/" + str(cat)
-        data = json.loads(self.query(url).content)
+        data = self.localQuery(url)
         return data['count']
 
-    def query(self, url, m="GET"):
-        #reutrn content
-        print("Query: " + url)
-        response = requests.request(url=url,method=m)
-        return response
+    def remoteQuery(self,url,m="GET"):
+        #throw a query to the database
+        try:
+            sleep(1)
+            response = requests.request(url=url,method=m)
+            self.lastStatus = response.status_code
+            self.lastResponse = json.loads(response.content)
+        except UnicodeError:
+            self.lastResponse = "Not utf-8 compatible"
+            self.lastStatus = "Error"
+        except:
+            self.lastResponse = "Error"
+            self.lastStatus = "Error"
+            return "Invalid URL"
+        self.lastQuery = url
+        return json.loads(response.content.decode('ISO-8859-1'))
+
+    def localQuery(self,url,m="GET"):
+        #throw a query to the database
+        try:
+            response = requests.request(url=url,method=m)
+            self.lastStatus = response.status_code
+            self.lastResponse = json.loads(response.content)
+        except UnicodeError:
+            self.lastResponse = "Not utf-8 compatible"
+            self.lastStatus = "Error"
+        except:
+            self.lastResponse = "Error"
+            self.lastStatus = "Error"
+            return "Invalid URL"
+        self.lastQuery = url
+        return json.loads(response.content)
 
     def get_CatLetterList(self, i):
         url = "https://services.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=" + str(i)
-        response = self.query(url).content
-        response = json.loads(response)
+        response = self.remoteQuery(url)
         return response
 
-
-    def getLastRuneDay(self, save=True):
-        print('Get Last RuneDay')
-        #gets and sets the lst tune day to cfg
-        url = "https://secure.runescape.com/m=itemdb_rs/api/info.json"
-        try:
-            #sleep(6)
-            runeday = json.loads(self.query(url).content)
-        except JSONDecodeError:
-            self.cfg.data['lastConfigUpdateRuneday'] = 0
-            print("NOT READABLE JSON!")
-        self.cfg.data['lastConfigUpdateRuneday'] = runeday['lastConfigUpdateRuneday']
-        self.lastRuneDay = runeday['lastConfigUpdateRuneday']
-    
-    def detectRuneDayEqual(self):
-        #if we have the runeday in the cfg file exactly as remote return true
-        try:
-            #not equal so we need to update
-            if self.cfg.data['lastConfigUpdateRuneday'] != self.getLastRuneDay(False):
-                self.getLastRuneDay()
-            return True
-        except KeyError:
-            self.getLastRuneDay()
-            return True
 

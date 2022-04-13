@@ -1,38 +1,35 @@
 from urllib import request
 import requests, re
 from datetime import datetime, date
-from  dbconnect import getAuth
 from time import sleep
+from Api import Api
+import os, time, json, sys
 from json import JSONDecodeError
-from codecs import decode
-import pickle, os, pprint, time, json, sqlite3, pymysql, sys
 
-class Item:
+class Item(Api):
     stampId=0
 
     def __init__(self,resultPage,cat=0,letter='#'):
-        if isinstance(resultPage, str) == False:
-            raise ValueError("Init Param must be STR")
-        self.initialData = resultPage
-        self.lastQuery = ""
-        self.lastResponse = ""
-        self.host = "http://localhost"
+        Api.__init__(self)
         try:
+            if isinstance(resultPage, str) == False:
+                raise ValueError("Init Param must be STR")
+            self.initialData = resultPage
+            self.host = "http://localhost"
             self.jason = json.loads(self.initialData)
-        except:
-            print(self.initialData)
-            raise JSONDecodeError("Not valid Json","param",0)
+            self.id = self.jason['id']
+            self.type = self.jason['type']
+            self.category_id = self.decodeCategory(self.type)
+            self.exists = bool(self.isInDb(self.id))
+            self.name = self.replaceData(self.jason['name'])
+            self.description = self.jason['description']
+            self.price = self.jason['current']['price']
+            self.members = 1 if self.jason['members'] == 'true' else 0
+            self.lastStatus = 0
+            self.saveSprite(True,True)
+        except JSONDecodeError:
+            print("Item couldnt be created from JSoN")
             return None 	
-        self.id = self.jason['id']
-        self.type = self.jason['type']
-        self.category_id = self.decodeCategory(self.type)
-        self.exists = bool(self.isInDb(self.id))
-        self.name = self.replaceData(self.jason['name'])
-        self.description = self.jason['description']
-        self.price = self.jason['current']['price']
-        self.members = 1 if self.jason['members'] == 'true' else 0
-        self.lastStatus = 0
-        self.saveSprite(True,True)
 
     def decodeCategory(self, category):
         categorynames = ["Miscellaneous", #Categories used by their.index()
@@ -81,7 +78,6 @@ class Item:
         return categorynames.index(category)
 
 
-        
     def toDb(self):
         host = self.host + "/item/" + str(self.id)
         if self.exists == False:
@@ -91,34 +87,18 @@ class Item:
             method = "PUT"
             print("EXISTS: {0}".format(self.name))
         url = "{0}?apid={1}&name={2}&members={3}&category_id={4}&description={5}&active=1&price={6}".format(host,self.id,self.name,self.members,self.category_id,self.description,self.price)
-        self.query(url, method)
-
+        response = self.localQuery(url, method)
+        if response['status'] == "Error":
+            raise ValueError("The Api Could not save!")
 
     def isInDb(self, id):
         ##check whether the item exists in the db
         url = self.host + '/item/exists/' + str(id)
-        response = json.loads(self.query(url).content)
-        return response['status'] == "Exists"
-
-
-    def query(self,url,m="GET"):
-        #throw a query to the database
         try:
-            self.lastQuery = url
-            response = requests.request(url=url,method=m)
-            self.lastStatus = response.status_code
-            self.lastResponse = json.loads(response.content)
-        except UnicodeError:
-            self.lastResponse = "Not utf-8 compatible"
-            self.lastQuery = url
-            self.lastStatus = "Error"
-        except:
-            self.lastQuery = url
-            self.lastResponse = "Error"
-            self.lastStatus = "Error"
-            return "Invalid URL"
-        return response
-
+            response = self.localQuery(url)
+            return response['status'] == "Exists"
+        except AttributeError as e:
+            print(str(e) + " " + url)
 
     def saveSprite(self,small=True,big=True):
         if Item.stampId == 0:
@@ -131,7 +111,7 @@ class Item:
 
         if small: #if the small file doesnt exist, save
             if os.path.exists(smSpritePath) == False:
-                query = self.query(smSprite).content
+                query = requests.request(smSprite).content
                 f = open(smSpritePath, "wb")
                 with open(smSpritePath, 'wb') as handler:
                     handler.write(query)
@@ -140,15 +120,16 @@ class Item:
 
         if big: #if the small file doesnt exist, save
             if os.path.exists(lgSpritePath) == False:
-                query = self.query(lgSprite).content
+                query = requests.request(lgSprite).content
                 f = open(lgSpritePath, "wb")
                 with open(lgSpritePath, 'wb') as handler:
                     handler.write(query)
                 f.close()
 
     def get_imageStamp(self):
+        #parse out the imagestamp from the url
         pageUrl = "https://services.runescape.com/m=itemdb_rs/api/catalogue/items.json?category=12&alpha=a&page=1"
-        page = json.loads(self.query(pageUrl).content)
+        page = self.remoteQuery(pageUrl)
         itemElement = page['items'][0]['icon']
         Item.stampId = re.search(r"\d{13}", itemElement).group()
 

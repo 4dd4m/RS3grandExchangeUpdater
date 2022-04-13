@@ -1,11 +1,12 @@
-from item import Item
-from api import Api
+from Item import Item
+from Api import Api
+from Pager import Pager
+
 import random, os
 import unittest
 from Config import *
 from json import JSONDecodeError
 from requests.exceptions import Timeout
-from pager import Pager
 from time import sleep
 
 class ConfigTest(unittest.TestCase):
@@ -52,7 +53,7 @@ class TestItem(unittest.TestCase):
 
     def test_itemQuery_invalid_request(self):
         item = Item(self.validParam)
-        self.assertEqual(item.query(""),"Invalid URL")
+        self.assertEqual(item.localQuery(""),"Invalid URL")
 
     def test_get_imageStamp(self):
         #if no class stampId variable, get it

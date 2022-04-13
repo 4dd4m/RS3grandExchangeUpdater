@@ -1,10 +1,12 @@
-import os
-import json
+import os, json
+from json import JSONDecodeError
+import requests
 
 class Config:
     def __init__(self):
         self.f = "config"
         self.data = self.initFile()
+        #self.getLastRuneDay()
 
     def initFile(self):
         if os.path.exists(self.f) is False:
@@ -19,6 +21,19 @@ class Config:
                     return {}
                 else:
                     return data
+
+    def getLastRuneDay(self, save=True):
+        print('Get Last RuneDay  '+ str(save))
+        #gets and sets the lst tune day to cfg
+        url = "https://secure.runescape.com/m=itemdb_rs/api/info.json"
+        try:
+            #sleep(6)
+            runeday = json.loads(requests.request(url=url,method="GET").content)
+        except JSONDecodeError:
+            self.data['lastConfigUpdateRuneday'] = 0
+            print("NOT READABLE JSON!")
+        self.data['lastConfigUpdateRuneday'] = runeday['lastConfigUpdateRuneday']
+        self.lastRuneDay = runeday['lastConfigUpdateRuneday']
 
     def save(self):
         with open (self.f, 'w') as f:
