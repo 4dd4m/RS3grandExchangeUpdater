@@ -21,15 +21,16 @@ try:
     print("Table: {0}".format(table))
     print("User: {0}".format(username))
     #Create Table if it is not exists
-    query = """CREATE TABLE IF NOT EXISTS `apidb` (
+    query = """CREATE TABLE IF NOT EXISTS `items` (
                       `id` smallint(5) unsigned NOT NULL,
+                      `apid` smallint(5) unsigned NOT NULL,
                       `name` varchar(46) DEFAULT NULL,
                       `description` varchar(200) DEFAULT NULL,
                       `members` int(1) NOT NULL,
-                      `category` int(2) NOT NULL,
+                      `category_id` int(2) NOT NULL,
                       `active` BOOLEAN,
-                      `updated` date NOT NULL,
-                      `added` date NOT NULL,
+                      `updated_at` date NOT NULL,
+                      `created_at` date NOT NULL,
                       PRIMARY KEY (`id`)
                     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;"""
     c.execute(query)
@@ -83,12 +84,12 @@ categorynames = ["Miscellaneous", #Categories used by their.index()
 def is_indb(item,today):
     member = ['false','true']
     #query the db if it is exists
-    indb = c.execute("select id from apidb WHERE id={0}".format(item['id']))
+    indb = c.execute("select apid from items WHERE apid={0}".format(item['id']))
     if indb == 1: #if it is, update it
         try:
-            q = 'UPDATE `apidb` SET `updated`="{0}", `members`={1}, \
-            `category`={2}, `name`="{3}" WHERE `id`={4};\
-            '.format(today,member.index(item['members']),
+            q = 'UPDATE `items` SET `members`={0}, \
+            `category_id`={1}, `name`="{2}" WHERE `apid`={3};\
+            '.format(member.index(item['members']),
                      categorynames.index(item['type']),item['name'],item['id'])
             c.execute(q)
             db.commit()
@@ -100,8 +101,8 @@ def is_indb(item,today):
 
 def save_picture(url,url2):
     id = url.split('gif?id=')[1] #getting the picture base filename
-    small = "images/small/" + str(id) + '.png'
-    large = "images/large/" + str(id) + '.png'
+    small = "/home/adam/repos/rs3GEUpdater/images/small/" + str(id) + '.png'
+    large = "/home/adam/repos/rs3GEUpdater/images/large/" + str(id) + '.png'
     if os.path.isfile(small) is False: #if the small file doesnt exist, save
         with request.urlopen(url) as response1, open(small, 'wb') as out_file:
             data1 = response1.read()
@@ -148,6 +149,8 @@ def pager(category,letter,saveData=True,savePic=True):
                 savelog("--------------------")
 
                 retries = 0 #counter for break the while
+
+                #read a page
                 while True:
                     result = fetch(cat,char,page,True)
                     if isinstance(result, list) and len(result) > 0:
@@ -188,7 +191,8 @@ def pager(category,letter,saveData=True,savePic=True):
                         save_picture(item['icon'],item['icon_large'])
                 if saveData == True: #write to the database
                     if len(row) > 0:
-                        c.executemany('insert into apidb (id,name,description,members,category,active,updated,added,price) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)',row)
+                        print(row)
+                        c.executemany('insert into items (apid,name,description,members,category_id,active,price) values (%s,%s,%s,%s,%s,%s,%s)',row)
                         db.commit()
                 if len(result) == 12:
                     savelog(">> Over next page")
@@ -222,7 +226,7 @@ def is_update_required():
             continue
 
         subItemsPerCat = 0 #items in each catergory
-        itemsPerCat = c.execute("select * from apidb where category="+str(i)+";")
+        itemsPerCat = c.execute("select * from items where category_id="+str(i)+";")
 
         for letter in alphabet: #iterating through each letter in the cat.
             total += letter['items'] #all items
@@ -240,10 +244,10 @@ def is_update_required():
             for letter in alpha: #iterating through each letter in the cat.
                 letterCounter += 1
                 if letter == '#': #special query witch regex
-                    query = 'select id as num from apidb where category=' + str(i) + """ and name REGEXP "^([0-9]|[!@#\\$%\\^\\'\\&*\\)\\(+=._-])";"""
+                    query = 'select apid as num from items where category_id=' + str(i) + """ and name REGEXP "^([0-9]|[!@#\\$%\\^\\'\\&*\\)\\(+=._-])";"""
                     itemperLocalLetter = c.execute(query)
                 else: #otherwise normal like query
-                    query = 'select id as num from apidb where category=' + str(i) + ' and name like "{0}%";'.format(letter)
+                    query = 'select apid as num from items where category_id=' + str(i) + ' and name like "{0}%";'.format(letter)
                     itemperLocalLetter = c.execute(query)
 
                 print("Letter {0}. RemoteItems: {1}. LocalItems: {2}".format(letter,itemRemoteLetter[letterCounter]['items'],itemperLocalLetter))
@@ -257,7 +261,7 @@ def is_update_required():
         else: #if remote matches with local catsum
             print(" {0}   -> {1}/{2} ({3})".format(i,subItemsPerCat,itemsPerCat,categorynames[i]))
 
-    totalLocalItems = c.execute("select * from apidb;")
+    totalLocalItems = c.execute("select * from items;")
     if total == totalLocalItems:
         savelog("Your database is up to date Remote: {0}, Local: {1}".format(total,totalLocalItems))
         return False
