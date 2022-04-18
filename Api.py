@@ -70,6 +70,7 @@ class Api:
             try:
                 url = self.localHost + "/count/category"
                 count = self.localQuery(url)
+                count = json.loads(response.content)
                 self.cfg.data['categoryCount'] = count['count']
                 if count['count'] == 0:
                     print("0 Category. Database Seeded?")
@@ -93,6 +94,8 @@ class Api:
         except UnicodeError:
             self.lastResponse = "Not utf-8 compatible"
             self.lastStatus = "Error"
+            print(response.content)
+            print(url)
         except:
             self.lastResponse = "Error"
             self.lastStatus = "Error"
@@ -104,8 +107,6 @@ class Api:
         #throw a query to the database
         try:
             response = requests.request(url=url,method=m)
-            self.lastStatus = response.status_code
-            self.lastResponse = json.loads(response.content)
         except UnicodeError:
             self.lastResponse = "Not utf-8 compatible"
             self.lastStatus = "Error"
@@ -114,11 +115,13 @@ class Api:
             self.lastStatus = "Error"
             return "Invalid URL"
         self.lastQuery = url
+        print(url)
         return json.loads(response.content)
 
     def get_CatLetterList(self, i):
         url = "https://services.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=" + str(i)
-        response = self.remoteQuery(url)
+        response = self.remoteQuery(url).content
+        response = json.loads(response)
         return response
 
 

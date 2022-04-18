@@ -48,9 +48,9 @@ class Pager(Api):
         self.cfg.save()
 
     def getAlpha(self):
-        return ['#', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+        #return ['#', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
     
-        #return ['p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+        return ['p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 if __name__ == '__main__':
     p = Pager()
@@ -58,7 +58,3 @@ if __name__ == '__main__':
         p.page()
     except KeyboardInterrupt:
         p.cfg.save()
-    except:
-        print("Something went wrong.... Restarting in 30 sec")
-        sleep(30)
-        p.page()

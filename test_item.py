@@ -31,7 +31,7 @@ class TestItem(unittest.TestCase):
 
     invalidParam = """{"icon":"https://secure.runescape.com/m=itemdb_rs/1649066480707_obj_sprite.gif?id=7198","icon_large":"https://secure.runescape.com/m=itemdb_rs/1649066480707_obj_big.gif?id=7198","id":"aaaaaaa","type":"Food and Drink","typeIcon":"https://www.runescape.com/img/categories/Food and Drink","name":"asdfasdf","description":"Much tastier than a normal fish pie.","current":{"trend":"neutral","price":"2,741"},"today":{"trend":"neutral","price":0},"members":"true"}"""
 
-    invalidJSON = """"icon:"https://secure.runescape.com/m=itemdb_rs/1649066480707_obj_sprite.gif?id=7198","icon_large:"https://secure.runescape.com/m=itemdb_rs/1649066480707_obj_big.gif?id=7198","id":"aaaaaaa","type":"Food and Drink","typeIcon":"https://www.runescape.com/img/categories/Food and Drink","name":"asdfasdf","description":"Much tastier than a normal fish pie.","current":{"trend":"neutral","price":"2,741"},"today":{"trend":"neutral","price":0},"members":"true"}"""
+    invalidJSON = """"icon:"https://secure.runescape.com/m=itemdb_rs/1649066480707_obj_sprite.gif?id=7198","icon_large:"https://secure.runescape.com/m=itemdb_rs/1649066480707_obj_big.gif?id=7198","id":"aaaaaaa","type":"Food and Drink","typeIcon":"https://www.runescape.com/img/categories/Food and Drink","name":"asdfasdf","description":Much tastier than a normal fish pie.","current":{"trend":"neutral","price":"2,741"},"today":{"trend":"neutral","price":0},"members":"true"}"""
 
     def test_InitialData(self):
     #must contain initialData
@@ -40,9 +40,7 @@ class TestItem(unittest.TestCase):
 
     def test_InitialData_JSONConversion(self):
         #JSON converted succesfully
-        with self.assertRaises(JSONDecodeError):
-            Item(self.invalidJSON)
-        self.assertRaises(JSONDecodeError) 
+        self.assertEqual(Item(self.invalidJSON),None) 
 
     def test_Initialize_with_invalid_data(self):
         # initialized with invalid data

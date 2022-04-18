@@ -79,14 +79,18 @@ class Item(Api):
 
 
     def toDb(self):
-        host = self.host + "/item/" + str(self.id)
         if self.exists == False:
+            host = self.host + "/item"
             method = "POST"
+            self.category_id += 1 #sb starts with id 1
             print("ADDED: {0}".format(self.name))
+            url = "{0}?apid={1}&name={2}&members={3}&category_id={4}&description={5}&active=1&price={6}".format(host,self.id,self.name,self.members,self.category_id,self.description,self.price)
         else:
             method = "PUT"
+            host = self.host + "/item/" + str(self.id)
+            self.category_id += 1 #sb starts with id 1
             print("EXISTS: {0}".format(self.name))
-        url = "{0}?apid={1}&name={2}&members={3}&category_id={4}&description={5}&active=1&price={6}".format(host,self.id,self.name,self.members,self.category_id,self.description,self.price)
+            url = "{0}?apid={1}&name={2}&members={3}&category_id={4}&description={5}&active=1&price={6}".format(host,self.id,self.name,self.members,self.category_id,self.description,self.price)
         response = self.localQuery(url, method)
         if response['status'] == "Error":
             raise ValueError("The Api Could not save!")
@@ -94,6 +98,7 @@ class Item(Api):
     def isInDb(self, id):
         ##check whether the item exists in the db
         url = self.host + '/item/exists/' + str(id)
+        print(url)
         try:
             response = self.localQuery(url)
             return response['status'] == "Exists"
@@ -111,7 +116,7 @@ class Item(Api):
 
         if small: #if the small file doesnt exist, save
             if os.path.exists(smSpritePath) == False:
-                query = requests.request(smSprite).content
+                query = requests.request(url=smSprite,method="GET").content
                 f = open(smSpritePath, "wb")
                 with open(smSpritePath, 'wb') as handler:
                     handler.write(query)
@@ -120,7 +125,7 @@ class Item(Api):
 
         if big: #if the small file doesnt exist, save
             if os.path.exists(lgSpritePath) == False:
-                query = requests.request(lgSprite).content
+                query = requests.request(url=lgSprite,method="GET").content
                 f = open(lgSpritePath, "wb")
                 with open(lgSpritePath, 'wb') as handler:
                     handler.write(query)
@@ -134,6 +139,7 @@ class Item(Api):
         Item.stampId = re.search(r"\d{13}", itemElement).group()
 
     def replaceData(self, string):
+        string = string.replace('+','_plus_ ')
         string = string.replace('+','_plus_')
         return string
 
